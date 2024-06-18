@@ -30,6 +30,10 @@ namespace UnityEngine.Rendering.Universal
         private static readonly int k_ShadowSoftnessFalloffIntensityID = Shader.PropertyToID("_ShadowSoftnessFalloffIntensity");
         private static readonly int k_ShadowShadowColorID = Shader.PropertyToID("_ShadowColor");
         private static readonly int k_ShadowUnshadowColorID = Shader.PropertyToID("_UnshadowColor");
+        private static readonly int k_IsometricRotateMatrix = Shader.PropertyToID("_IsometricRotateMatrix");
+        private static readonly int k_ShadowOffset = Shader.PropertyToID("_ShadowOffset");
+
+        private static readonly string k_UseIsometricShadows = "USE_ISOMETRIC_SHADOWS";
 
         private static readonly ProfilingSampler m_ProfilingSamplerShadows = new ProfilingSampler("Draw 2D Shadow Texture");
         private static readonly ProfilingSampler m_ProfilingSamplerShadowsA = new ProfilingSampler("Draw 2D Shadows (A)");
@@ -79,12 +83,29 @@ namespace UnityEngine.Rendering.Universal
             return material;
         }
 
-        private static Material GetProjectedShadowMaterial(this Renderer2DData rendererData)
+        private static Material CreateProjectedShadowMaterial(Shader shader, int offset, int pass, Light2D light)
+        {
+            Material material;  // pairs of color channels
+            material = CoreUtils.CreateEngineMaterial(shader);
+            material.SetInt(k_ShadowColorMaskID, 1 << (offset + 1));
+           
+            if (light.isIsometric)
+                material.EnableKeyword(k_UseIsometricShadows);
+            else
+                material.DisableKeyword(k_UseIsometricShadows);
+
+            material.SetPass(pass);
+
+            return material;
+        }
+
+
+        private static Material GetProjectedShadowMaterial(this Renderer2DData rendererData, Light2D light)
         {
             //rendererData.projectedShadowMaterial = null;
             if (rendererData.projectedShadowMaterial == null || rendererData.projectedShadowShader != rendererData.projectedShadowMaterial.shader)
             {
-                rendererData.projectedShadowMaterial = CreateMaterial(rendererData.projectedShadowShader, 0, 0);
+                rendererData.projectedShadowMaterial = CreateProjectedShadowMaterial(rendererData.projectedShadowShader, 0, 0, light);
             }
 
             return rendererData.projectedShadowMaterial;
@@ -296,12 +317,24 @@ namespace UnityEngine.Rendering.Universal
             cmdBuffer.ReleaseTemporaryRT(m_RenderTargetIds[shadowIndex]);
         }
 
-        public static void SetShadowProjectionGlobals(RasterCommandBuffer cmdBuffer, ShadowCaster2D shadowCaster, Light2D light)
+        public static void SetShadowProjectionGlobals(RasterCommandBuffer cmdBuffer, ShadowCaster2D shadowCaster, Light2D light, Material shadowsMaterial)
         {
             cmdBuffer.SetGlobalVector(k_ShadowModelScaleID, shadowCaster.m_CachedLossyScale);
             cmdBuffer.SetGlobalMatrix(k_ShadowModelMatrixID, shadowCaster.m_CachedShadowMatrix);
             cmdBuffer.SetGlobalMatrix(k_ShadowModelInvMatrixID, shadowCaster.m_CachedInverseShadowMatrix);
+            cmdBuffer.SetGlobalMatrix(k_ShadowModelMatrixID, shadowCaster.m_CachedShadowMatrix);
+            cmdBuffer.SetGlobalVector(k_ShadowOffset, shadowCaster.shadowOffset);
+            cmdBuffer.SetGlobalMatrix(k_IsometricRotateMatrix, shadowCaster.m_CachedIsometricRotateMatrix);
             cmdBuffer.SetGlobalFloat(k_ShadowSoftnessFalloffIntensityID, light.shadowSoftnessFalloffIntensity);
+            
+            var shadowRadius = 0f;
+
+            //if (light.isIsometric)
+            //    shadowRadius = shadowCaster.boundingSphere.radius + (light.transform.position - light.boundingSphere.position).magnitude;
+            //else
+            //    shadowRadius = light.boundingSphere.radius + (light.transform.position - light.boundingSphere.position).magnitude;
+            shadowRadius = light.boundingSphere.radius + (light.transform.position - light.boundingSphere.position).magnitude;
+            cmdBuffer.SetGlobalFloat(k_ShadowRadiusID, shadowRadius);
 
             if (shadowCaster.edgeProcessing == ShadowCaster2D.EdgeProcessing.None)
                 cmdBuffer.SetGlobalFloat(k_ShadowContractionDistanceID, shadowCaster.trimEdge);
@@ -361,7 +394,7 @@ namespace UnityEngine.Rendering.Universal
                     {
                         if (shadowCaster.shadowCastingSource != ShadowCaster2D.ShadowCastingSources.None && shadowCaster.mesh != null)
                         {
-                            SetShadowProjectionGlobals(cmdBuffer, shadowCaster, light);
+                            SetShadowProjectionGlobals(cmdBuffer, shadowCaster, light, projectedShadowsMaterial);
                             cmdBuffer.DrawMesh(shadowCaster.mesh, shadowCaster.transform.localToWorldMatrix, projectedShadowsMaterial, 0, pass);
                         }
                     }
@@ -437,7 +470,7 @@ namespace UnityEngine.Rendering.Universal
                 if (ShadowCasterIsVisible(shadowCaster) && shadowCaster.castingOption == ShadowCaster2D.ShadowCastingOptions.CastShadow && shadowCaster.mesh != null)
                 {
                     Renderer renderer = GetRendererFromCaster(shadowCaster, light, layerToRender);
-                    SetShadowProjectionGlobals(cmdBuffer, shadowCaster, light);
+                    SetShadowProjectionGlobals(cmdBuffer, shadowCaster, light, spriteShadowMaterial);
                     cmdBuffer.DrawMesh(shadowCaster.mesh, shadowCaster.transform.localToWorldMatrix, projectedUnshadowMaterial, 0, 1);
                 }
             }
@@ -470,13 +503,10 @@ namespace UnityEngine.Rendering.Universal
         {
             using (new ProfilingScope(cmdBuffer, m_ProfilingSamplerShadows))
             {
-                var shadowRadius = light.boundingSphere.radius + (light.transform.position - light.boundingSphere.position).magnitude;
-
                 cmdBuffer.SetGlobalVector(k_LightPosID, light.transform.position);
-                cmdBuffer.SetGlobalFloat(k_ShadowRadiusID, shadowRadius);
                 cmdBuffer.SetGlobalFloat(k_SoftShadowAngle, Mathf.Deg2Rad * light.shadowSoftness * k_MaxShadowSoftnessAngle);
 
-                var projectedShadowMaterial = rendererData.GetProjectedShadowMaterial();
+                var projectedShadowMaterial = rendererData.GetProjectedShadowMaterial(light);
                 var projectedUnshadowMaterial = rendererData.GetProjectedUnshadowMaterial();
                 var spriteShadowMaterial = rendererData.GetSpriteShadowMaterial();
                 var spriteUnshadowMaterial = rendererData.GetSpriteUnshadowMaterial();

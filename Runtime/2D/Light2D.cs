@@ -54,7 +54,15 @@ namespace UnityEngine.Rendering.Universal
             /// <summary>
             /// Shapeless light that affects the entire screen.
             /// </summary>
-            Global = 4
+            Global = 4,
+            /// <summary>
+            /// The shape of light is circular and can also be configured into a pizza shape.
+            /// </summary>
+            IsometricPoint = 5,
+            /// <summary>
+            /// Shapeless light that affects the entire screen.
+            /// </summary>
+            IsometricGlobal = 6
         }
 
         /// <summary>
@@ -114,6 +122,9 @@ namespace UnityEngine.Rendering.Universal
         [ColorUsage(true)]
         [SerializeField] Color m_Color = Color.white;
         [SerializeField] float m_Intensity = 1;
+      
+        [Range(0, 360)]
+        [SerializeField] float m_LightAngle2D = 0f;
 
         [FormerlySerializedAs("m_LightVolumeOpacity")]
         [SerializeField] float m_LightVolumeIntensity = 1.0f;
@@ -179,12 +190,12 @@ namespace UnityEngine.Rendering.Universal
 
         // We use Blue Channel of LightMesh's vertex color to indicate Slot Index.
         int m_BatchSlotIndex = 0;
-        internal int batchSlotIndex { get { return m_BatchSlotIndex; } set {  m_BatchSlotIndex = value; } }
+        internal int batchSlotIndex { get { return m_BatchSlotIndex; } set { m_BatchSlotIndex = value; } }
         internal int[] affectedSortingLayers => m_ApplyToSortingLayers;
 
         private int lightCookieSpriteInstanceID => lightCookieSprite?.GetInstanceID() ?? 0;
 
-        internal bool useCookieSprite => (lightType == LightType.Point || lightType == LightType.Sprite) && (lightCookieSprite != null && lightCookieSprite.texture != null);
+        internal bool useCookieSprite => (lightType == LightType.Point || lightType == LightType.Sprite || lightType == LightType.IsometricPoint) && (lightCookieSprite != null && lightCookieSprite.texture != null);
 
         internal RTHandle m_CookieSpriteTexture = null;
         internal TextureHandle m_CookieSpriteTextureHandle;
@@ -266,6 +277,12 @@ namespace UnityEngine.Rendering.Universal
         public float intensity { get => m_Intensity; set => m_Intensity = value; }
 
         /// <summary>
+        /// The lights current Angle
+        /// </summary>
+        public float lightAngle2D { get => m_LightAngle2D; set => m_LightAngle2D = value; }
+
+
+        /// <summary>
         /// The lights current intensity
         /// </summary>
         ///
@@ -284,6 +301,10 @@ namespace UnityEngine.Rendering.Universal
         [Obsolete]
         public bool volumeIntensityEnabled { get => m_LightVolumeEnabled; set => m_LightVolumeEnabled = value; }
 
+        /// <summary>
+        /// Return true if LightType is Isometric 
+        /// </summary>
+        public bool isIsometric { get => m_LightType == LightType.IsometricGlobal || m_LightType == LightType.IsometricPoint; }
 
         /// <summary>
         /// Enables or disables the light's volume
@@ -294,7 +315,7 @@ namespace UnityEngine.Rendering.Universal
         /// <summary>
         /// The Sprite that's used by the Sprite Light type to control the shape light
         /// </summary>
-        public Sprite lightCookieSprite { get { return m_LightType != LightType.Point ? m_LightCookieSprite : m_DeprecatedPointLightCookieSprite; } set => m_LightCookieSprite = value; }
+        public Sprite lightCookieSprite { get { return !(m_LightType == LightType.Point || m_LightType == LightType.Point) ? m_LightCookieSprite : m_DeprecatedPointLightCookieSprite; } set => m_LightCookieSprite = value; }
 
         /// <summary>
         /// Controls the brightness and distance of the fall off (edge) of the light
@@ -436,6 +457,9 @@ namespace UnityEngine.Rendering.Universal
                     case LightType.Point:
                         m_LocalBounds = LightUtility.GenerateParametricMesh(this, 1.412135f, 0, 0, 4, batchChannelColor);
                         break;
+                    case LightType.IsometricPoint:
+                        m_LocalBounds = LightUtility.GenerateParametricMesh(this, 1.412135f, 0, 0, 4, batchChannelColor);
+                        break;
                 }
 
                 UpdateCookieSpriteTexture();
@@ -474,7 +498,7 @@ namespace UnityEngine.Rendering.Universal
         internal Matrix4x4 GetMatrix()
         {
             var matrix = transform.localToWorldMatrix;
-            if (lightType == Light2D.LightType.Point)
+            if (lightType == Light2D.LightType.Point || lightType == Light2D.LightType.IsometricPoint)
             {
                 var scale = new Vector3(pointLightOuterRadius, pointLightOuterRadius, pointLightOuterRadius);
                 matrix = Matrix4x4.TRS(transform.position, transform.rotation, scale);

@@ -27,6 +27,8 @@ Shader "Hidden/ShadowProjected2D"
             #pragma vertex vert
             #pragma fragment frag
 
+            #pragma multi_compile USE_ISOMETRIC_SHADOWS __
+
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/ShadowProjectVertex.hlsl"
 
@@ -73,6 +75,8 @@ Shader "Hidden/ShadowProjected2D"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+
+            #pragma multi_compile USE_ISOMETRIC_SHADOWS_ON __
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/ShadowProjectVertex.hlsl"

@@ -88,7 +88,7 @@ namespace UnityEngine.Rendering.Universal
         [SerializeField] int[] m_ApplyToSortingLayers = null;
         [SerializeField] Vector3[] m_ShapePath = null;
         [SerializeField] int m_ShapePathHash = 0;
-
+        [SerializeField] Vector3 m_ShadowOffset = new Vector3(0, 0.5f, 0);
         [SerializeField] int m_InstanceId;
         [SerializeField] Component m_ShadowShape2DComponent;
         [SerializeReference] ShadowShape2DProvider m_ShadowShape2DProvider;
@@ -141,6 +141,8 @@ namespace UnityEngine.Rendering.Universal
             set { m_AlphaCutoff = value; }
         }
 
+        public Vector3 shadowOffset { get { return m_ShadowOffset; } set { m_ShadowOffset = value; } }
+
         /// <summary>
         /// The path for the shape.
         /// </summary>
@@ -167,6 +169,7 @@ namespace UnityEngine.Rendering.Universal
         internal Matrix4x4 m_CachedShadowMatrix;
         internal Matrix4x4 m_CachedInverseShadowMatrix;
         internal Matrix4x4 m_CachedLocalToWorldMatrix;
+        internal Matrix4x4 m_CachedIsometricRotateMatrix;
         internal int spriteMaterialCount => m_SpriteMaterialCount;
 
         internal override void CacheValues()
@@ -183,6 +186,13 @@ namespace UnityEngine.Rendering.Universal
             m_CachedInverseShadowMatrix = m_CachedShadowMatrix.inverse;
 
             m_CachedLocalToWorldMatrix = transform.localToWorldMatrix;
+
+            m_CachedIsometricRotateMatrix = Matrix4x4.zero;
+            m_CachedIsometricRotateMatrix.SetColumn(0, new Vector4(1, 0, 0, 0));
+            m_CachedIsometricRotateMatrix.SetColumn(1, new Vector4(0, -Mathf.Cos(90.0f), Mathf.Sin(90.0f), 0));
+            m_CachedIsometricRotateMatrix.SetColumn(2, new Vector4(0, -Mathf.Sin(90.0f), -Mathf.Cos(90.0f), 0));
+            m_CachedIsometricRotateMatrix.SetColumn(3, new Vector4(0, 0, 0, 0));
+
         }
 
         /// <summary>

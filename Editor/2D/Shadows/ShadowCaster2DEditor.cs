@@ -57,6 +57,7 @@ namespace UnityEditor.Rendering.Universal
             public static GUIContent alphaCutoff = EditorGUIUtility.TrTextContent("Alpha Cutoff", "Required for correct unshadowed sprite overlap.");
             public static GUIContent castingOption = EditorGUIUtility.TrTextContent("Casting Option", "Specifies how to draw the shadow used with the ShadowCaster2D");
             public static GUIContent castingSource = EditorGUIUtility.TrTextContent("Casting Source", "Specifies the source of the shape used for projected shadows");
+            public static GUIContent shadowOffset = EditorGUIUtility.TrTextContent("Shadow Offset", "Required for correct shadow offset.");
         }
 
         SerializedProperty m_CastingOption;
@@ -66,6 +67,7 @@ namespace UnityEditor.Rendering.Universal
         SerializedProperty m_TrimEdge;
         SerializedProperty m_AlphaCutoff;
         SerializedProperty m_ShadowShape2DProvider;
+        SerializedProperty m_ShadowOffset;
         SortingLayerDropDown m_SortingLayerDropDown;
         CastingSourceDropDown m_CastingSourceDropDown;
        
@@ -77,6 +79,7 @@ namespace UnityEditor.Rendering.Universal
             m_CastingSource = serializedObject.FindProperty("m_ShadowCastingSource");
             m_ShadowMesh = serializedObject.FindProperty("m_ShadowMesh");
             m_AlphaCutoff = serializedObject.FindProperty("m_AlphaCutoff");
+            m_ShadowOffset = serializedObject.FindProperty("m_ShadowOffset");
             m_TrimEdge = m_ShadowMesh.FindPropertyRelative("m_TrimEdge");
             m_ShadowShape2DProvider = serializedObject.FindProperty("m_ShadowShape2DProvider");
 
@@ -125,6 +128,8 @@ namespace UnityEditor.Rendering.Universal
 
                 EditorGUILayout.PropertyField(m_AlphaCutoff, Styles.alphaCutoff);
             }
+
+            EditorGUILayout.PropertyField(m_ShadowOffset, Styles.shadowOffset);
 
             if ((ShadowCaster2D.ShadowCastingSources)m_CastingSource.intValue == ShadowCaster2D.ShadowCastingSources.ShapeEditor)
                 ShadowCaster2DInspectorGUI<ShadowCaster2DShadowCasterShapeTool>();

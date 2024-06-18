@@ -109,7 +109,7 @@ namespace UnityEngine.Rendering.Universal
                         // Set shader global properties
                         RendererLighting.SetPerLightShaderGlobals(cmd, light, slotIndex, passData.isVolumetric, isShadow, LightBatch.isBatchingSupported);
 
-                        if (light.normalMapQuality != Light2D.NormalMapQuality.Disabled || light.lightType == Light2D.LightType.Point)
+                        if (light.normalMapQuality != Light2D.NormalMapQuality.Disabled || light.lightType == Light2D.LightType.Point || light.lightType == Light2D.LightType.IsometricPoint)
                             RendererLighting.SetPerPointLightShaderGlobals(passData.rendererData, cmd, light, slotIndex, LightBatch.isBatchingSupported);
 
                         RendererLighting.SetCookieShaderGlobals(cmd, light);

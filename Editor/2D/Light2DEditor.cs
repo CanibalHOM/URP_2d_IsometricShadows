@@ -71,7 +71,9 @@ namespace UnityEditor.Rendering.Universal
             public static GUIContent lightTypeSprite = new GUIContent("Sprite", Resources.Load("InspectorIcons/SpriteLight") as Texture);
             public static GUIContent lightTypePoint = new GUIContent("Spot", Resources.Load("InspectorIcons/PointLight") as Texture);
             public static GUIContent lightTypeGlobal = new GUIContent("Global", Resources.Load("InspectorIcons/GlobalLight") as Texture);
-            public static GUIContent[] lightTypeOptions = new GUIContent[] { lightTypeFreeform, lightTypeSprite, lightTypePoint, lightTypeGlobal };
+            public static GUIContent lightTypeIsometricPoint = new GUIContent("Isometric Spot", Resources.Load("InspectorIcons/PointLight") as Texture);
+            public static GUIContent lightTypeIsometricGlobal = new GUIContent("Isometric Global", Resources.Load("InspectorIcons/GlobalLight") as Texture);
+            public static GUIContent[] lightTypeOptions = new GUIContent[] { lightTypeFreeform, lightTypeSprite, lightTypePoint, lightTypeGlobal, lightTypeIsometricPoint, lightTypeIsometricGlobal};
 
 
             public static GUIContent blendingSettingsFoldout = EditorGUIUtility.TrTextContent("Blending", "Options used for blending");
@@ -85,6 +87,7 @@ namespace UnityEditor.Rendering.Universal
             public static GUIContent generalFalloffIntensity = EditorGUIUtility.TrTextContent("Falloff Strength", "Adjusts the falloff curve to control the softness of this light’s edges. The higher the falloff strength, the softer the edges of this light.");
             public static GUIContent generalLightColor = EditorGUIUtility.TrTextContent("Color", "Adjusts this light’s color.");
             public static GUIContent generalLightIntensity = EditorGUIUtility.TrTextContent("Intensity", "Adjusts this light’s color intensity by using multiply to brighten the Sprite beyond its original color.");
+            public static GUIContent generalLightAngle2D = EditorGUIUtility.TrTextContent("Light Angle2D", "Adjusts this light’s color intensity by using multiply to brighten the Sprite beyond its original color.");
             public static GUIContent generalVolumeIntensity = EditorGUIUtility.TrTextContent("Intensity", "Adjusts the intensity of this additional light volume that's additively blended on top of this light. To enable the Volumetric Shadow Strength, increase this Intensity to be greater than 0.");
             public static GUIContent generalBlendStyle = EditorGUIUtility.TrTextContent("Blend Style", "Adjusts how this light blends with the Sprites on the Target Sorting Layers. Different Blend Styles can be customized in the 2D Renderer Data Asset.");
             public static GUIContent generalLightOverlapOperation = EditorGUIUtility.TrTextContent("Overlap Operation", "Determines how this light blends with the other lights either through additive or alpha blending.");
@@ -131,6 +134,7 @@ namespace UnityEditor.Rendering.Universal
         SerializedProperty m_LightType;
         SerializedProperty m_LightColor;
         SerializedProperty m_LightIntensity;
+        SerializedProperty m_LightAngle2D;
         SerializedProperty m_UseNormalMap;
         SerializedProperty m_ShadowsEnabled;
         SerializedProperty m_ShadowIntensity;
@@ -227,6 +231,7 @@ namespace UnityEditor.Rendering.Universal
             m_LightType = serializedObject.FindProperty("m_LightType");
             m_LightColor = serializedObject.FindProperty("m_Color");
             m_LightIntensity = serializedObject.FindProperty("m_Intensity");
+            m_LightAngle2D = serializedObject.FindProperty("m_LightAngle2D");
             m_UseNormalMap = serializedObject.FindProperty("m_UseNormalMap");
             m_ShadowsEnabled = serializedObject.FindProperty("m_ShadowsEnabled");
             m_ShadowIntensity = serializedObject.FindProperty("m_ShadowIntensity");
@@ -514,6 +519,13 @@ namespace UnityEditor.Rendering.Universal
             DrawBlendingGroup();
         }
 
+        void DrawIsometricGlobalLight(SerializedObject serializedObject)
+        {
+            EditorGUILayout.Slider(m_LightAngle2D, 0, 360, Styles.generalLightAngle2D);
+            m_SortingLayerDropDown.OnTargetSortingLayers(serializedObject, targets, Styles.generalSortingLayerPrefixLabel, AnalyticsTrackChanges);
+            DrawBlendingGroup();
+        }
+
         void DrawParametricDeprecated(SerializedObject serializedObject)
         {
             GUIContent buttonText = targets.Length > 1 ? Styles.deprecatedParametricLightButtonMulti : Styles.deprecatedParametricLightButtonSingle;
@@ -764,6 +776,18 @@ namespace UnityEditor.Rendering.Universal
                         EditorUtility.SetDirty(light);
                 }
                 break;
+                case Light2D.LightType.IsometricPoint:
+                {
+                    Undo.RecordObject(light.transform, "Edit Point Light Transform");
+                    Undo.RecordObject(light, "Edit Point Light");
+
+                    DrawRangeHandles(light);
+                    DrawAngleHandles(light);
+
+                    if (GUI.changed)
+                        EditorUtility.SetDirty(light);
+                }
+                break;
                 case Light2D.LightType.Sprite:
                 {
                     var cookieSprite = light.lightCookieSprite;
@@ -829,6 +853,7 @@ namespace UnityEditor.Rendering.Universal
                     if (m_LightType.intValue != (int)Light2D.DeprecatedLightType.Parametric)
                         meshChanged = DrawLightCommon();
 
+
                     switch (m_LightType.intValue)
                     {
                         case (int)Light2D.LightType.Point:
@@ -849,6 +874,16 @@ namespace UnityEditor.Rendering.Universal
                         case (int)Light2D.LightType.Global:
                         {
                             DrawGlobalLight(serializedObject);
+                        }
+                        break;
+                        case (int)Light2D.LightType.IsometricPoint:
+                        {
+                            DrawSpotLight(serializedObject);
+                        }
+                        break;
+                        case (int)Light2D.LightType.IsometricGlobal:
+                        {
+                            DrawIsometricGlobalLight(serializedObject);
                         }
                         break;
                         case (int)Light2D.DeprecatedLightType.Parametric:

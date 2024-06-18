@@ -19,7 +19,7 @@ namespace UnityEngine.Rendering.Universal
 
         private static readonly string[] k_UseBlendStyleKeywords =
         {
-            "USE_SHAPE_LIGHT_TYPE_0", "USE_SHAPE_LIGHT_TYPE_1", "USE_SHAPE_LIGHT_TYPE_2", "USE_SHAPE_LIGHT_TYPE_3"
+            "USE_SHAPE_LIGHT_TYPE_0", "USE_SHAPE_LIGHT_TYPE_1", "USE_SHAPE_LIGHT_TYPE_2", "USE_SHAPE_LIGHT_TYPE_3",  "USE_SHAPE_LIGHT_TYPE_4", "USE_SHAPE_LIGHT_TYPE_5"
         };
 
         private static readonly int[] k_BlendFactorsPropIDs =
@@ -196,7 +196,7 @@ namespace UnityEngine.Rendering.Universal
 
         private static bool CanRenderLight(IRenderPass2D pass, Light2D light, int blendStyleIndex, int layerToRender, bool isVolume, ref Mesh lightMesh, ref Material lightMaterial)
         {
-            if (light != null && light.lightType != Light2D.LightType.Global && light.blendStyleIndex == blendStyleIndex && light.IsLitLayer(layerToRender))
+            if (light != null && !(light.lightType == Light2D.LightType.Global || light.lightType == Light2D.LightType.IsometricGlobal) && light.blendStyleIndex == blendStyleIndex && light.IsLitLayer(layerToRender))
             {
                 lightMesh = light.lightMesh;
                 if (lightMesh == null)
@@ -243,7 +243,7 @@ namespace UnityEngine.Rendering.Universal
             var slotIndex = lightBatch.SlotIndex(light.batchSlotIndex);
             SetPerLightShaderGlobals(CommandBufferHelpers.GetRasterCommandBuffer(cmd), light, slotIndex, isVolume, hasShadows, batchingSupported);
 
-            if (light.lightType == Light2D.LightType.Point)
+            if (light.lightType == Light2D.LightType.Point || light.lightType == Light2D.LightType.IsometricPoint)
                 SetPerPointLightShaderGlobals(pass.rendererData, CommandBufferHelpers.GetRasterCommandBuffer(cmd), light, slotIndex, batchingSupported);
 
             // Check if StructuredBuffer is supported, if not fallback.
@@ -698,7 +698,7 @@ namespace UnityEngine.Rendering.Universal
             {
                 material.EnableKeyword(k_UseVolumetric);
 
-                if (light.lightType == Light2D.LightType.Point)
+                if (light.lightType == Light2D.LightType.Point || light.lightType == Light2D.LightType.IsometricPoint)
                     SetBlendModes(material, BlendMode.One, BlendMode.One);
                 else
                 {

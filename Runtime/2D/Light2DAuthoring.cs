@@ -12,6 +12,8 @@ namespace UnityEngine.Rendering.Universal
             "FreeformLight.png",
             "SpriteLight.png",
             "PointLight.png",
+            "GlobalLight.png",
+            "PointLight.png",
             "GlobalLight.png"
         };
 
