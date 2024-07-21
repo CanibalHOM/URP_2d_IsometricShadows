@@ -282,6 +282,9 @@ namespace UnityEngine.Rendering.Universal
 
         internal bool IsLit(Light2D light)
         {
+            if (light.lightType == Light2D.LightType.IsometricGlobal)
+                return true;
+
             // Oddly adding and subtracting vectors is expensive here because of the new structures created...
             Vector3 deltaPos;
             deltaPos.x = light.m_CachedPosition.x - boundingSphere.position.x;

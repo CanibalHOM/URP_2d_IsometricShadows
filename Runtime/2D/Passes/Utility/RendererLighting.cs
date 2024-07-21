@@ -19,7 +19,7 @@ namespace UnityEngine.Rendering.Universal
 
         private static readonly string[] k_UseBlendStyleKeywords =
         {
-            "USE_SHAPE_LIGHT_TYPE_0", "USE_SHAPE_LIGHT_TYPE_1", "USE_SHAPE_LIGHT_TYPE_2", "USE_SHAPE_LIGHT_TYPE_3",  "USE_SHAPE_LIGHT_TYPE_4", "USE_SHAPE_LIGHT_TYPE_5"
+            "USE_SHAPE_LIGHT_TYPE_0", "USE_SHAPE_LIGHT_TYPE_1", "USE_SHAPE_LIGHT_TYPE_2", "USE_SHAPE_LIGHT_TYPE_3",  "USE_SHAPE_LIGHT_TYPE_4", "USE_SHAPE_LIGHT_TYPE_5", "USE_SHAPE_LIGHT_TYPE_6"
         };
 
         private static readonly int[] k_BlendFactorsPropIDs =
@@ -196,7 +196,7 @@ namespace UnityEngine.Rendering.Universal
 
         private static bool CanRenderLight(IRenderPass2D pass, Light2D light, int blendStyleIndex, int layerToRender, bool isVolume, ref Mesh lightMesh, ref Material lightMaterial)
         {
-            if (light != null && !(light.lightType == Light2D.LightType.Global || light.lightType == Light2D.LightType.IsometricGlobal) && light.blendStyleIndex == blendStyleIndex && light.IsLitLayer(layerToRender))
+            if (light != null && !(light.lightType == Light2D.LightType.Global || light.lightType == Light2D.LightType.IsometricGlobal) && light.blendStyleIndex == blendStyleIndex && light.IsLitLayer(layerToRender))            
             {
                 lightMesh = light.lightMesh;
                 if (lightMesh == null)
@@ -295,7 +295,6 @@ namespace UnityEngine.Rendering.Universal
                     }
                     batchedLights++;
                 }
-
 
                 // Set the current RT to the light RT
                 if (shadowLightCount > 0 || requiresRTInit)

@@ -31,6 +31,7 @@ Shader "Hidden/Light2D"
             #pragma multi_compile USE_SHAPE_LIGHT_TYPE_3 __
             #pragma multi_compile USE_SHAPE_LIGHT_TYPE_4 __
             #pragma multi_compile USE_SHAPE_LIGHT_TYPE_5 __
+            #pragma multi_compile USE_SHAPE_LIGHT_TYPE_6 __
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/LightingUtility.hlsl"
@@ -91,7 +92,7 @@ Shader "Hidden/Light2D"
 #endif
 
                 // If Sprite use UV.
-                o.uv = (_L2D_LIGHT_TYPE == 2 || _L2D_LIGHT_TYPE == 5) ? a.uv : float2(a.color.a, _L2D_FALLOFF_INTENSITY);
+                o.uv = (_L2D_LIGHT_TYPE == 2) ? a.uv : float2(a.color.a, _L2D_FALLOFF_INTENSITY);
 
                 float4 worldSpacePos;
                 worldSpacePos.xyz = TransformObjectToWorld(positionOS);
@@ -145,12 +146,6 @@ Shader "Hidden/Light2D"
                         v.lightOffset = attributes.color;
                         return v;
                     }
-                    case 4:
-                    {
-                        Varyings v = vert_shape(attributes, light);
-                        v.lightOffset = attributes.color;
-                        return v;
-                    }
                     break;
                     case 5:
                     {
@@ -158,6 +153,7 @@ Shader "Hidden/Light2D"
                         v.lightOffset = attributes.color;
                         return v;
                     }
+                    break;
                 }
 
                 Varyings v = (Varyings)0;
@@ -167,7 +163,7 @@ Shader "Hidden/Light2D"
             FragmentOutput frag_shape(Varyings i, PerLight2D light)
             {
                 half4 lightColor = i.color;
-                if (_L2D_LIGHT_TYPE == 2 || _L2D_LIGHT_TYPE == 5)
+                if (_L2D_LIGHT_TYPE == 2)
                 {
                     half4 cookie = SAMPLE_TEXTURE2D(_CookieTex, sampler_CookieTex, i.uv);
 #if USE_ADDITIVE_BLENDING
@@ -258,17 +254,13 @@ Shader "Hidden/Light2D"
                         FragmentOutput output = frag_point(i, light);
                         return output;
                     }
-                    case 4:
-                    {
-                        FragmentOutput output = frag_shape(i, light);
-                        return output;
-                    }
                     break;
                     case 5:
                     {
                         FragmentOutput output = frag_point(i, light);
                         return output;
                     }
+                    break;
                 }
 
                 half4 color = i.color;

@@ -82,7 +82,7 @@ namespace UnityEngine.Rendering.Universal
 
                         // Check if light is valid
                         if (light == null ||
-                            light.lightType == Light2D.LightType.Global ||
+                            light.lightType == Light2D.LightType.Global || light.lightType == Light2D.LightType.IsometricGlobal ||
                             light.blendStyleIndex != blendStyleIndex ||
                             (isShadow && passData.shadowIndex != i) )
                             continue;

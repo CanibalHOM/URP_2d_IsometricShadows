@@ -281,7 +281,6 @@ namespace UnityEngine.Rendering.Universal
         /// </summary>
         public float lightAngle2D { get => m_LightAngle2D; set => m_LightAngle2D = value; }
 
-
         /// <summary>
         /// The lights current intensity
         /// </summary>
@@ -305,6 +304,11 @@ namespace UnityEngine.Rendering.Universal
         /// Return true if LightType is Isometric 
         /// </summary>
         public bool isIsometric { get => m_LightType == LightType.IsometricGlobal || m_LightType == LightType.IsometricPoint; }
+
+        /// <summary>
+        /// Return true if LightType is Isometric 
+        /// </summary>
+        public bool isGlobalIsometric { get => m_LightType == LightType.IsometricGlobal; }
 
         /// <summary>
         /// Enables or disables the light's volume
@@ -540,7 +544,7 @@ namespace UnityEngine.Rendering.Universal
 
         private void LateUpdate()
         {
-            if (m_LightType == LightType.Global)
+            if (m_LightType == LightType.Global || m_LightType == LightType.IsometricGlobal)
                 return;
 
             UpdateMesh(forceUpdate);

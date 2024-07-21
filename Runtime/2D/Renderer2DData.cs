@@ -76,6 +76,12 @@ namespace UnityEngine.Rendering.Universal
         [SerializeField, Reload("Shaders/2D/Shadow2D-Projected.shader")]
         Shader m_ProjectedShadowShader = null;
 
+        [SerializeField, Reload("Shaders/2D/Shadow2D-ProjectedIsometric.shader")]
+        Shader m_ProjectedIsometricShadowShader = null;
+
+        [SerializeField, Reload("Shaders/2D/Shadow2D-ProjectedIsometricGlobal.shader")]
+        Shader m_ProjectedIsometricGlobalShadowShader = null;
+
         [SerializeField, Reload("Shaders/2D/Shadow2D-Shadow-Sprite.shader")]
         Shader m_SpriteShadowShader = null;
 
@@ -121,6 +127,8 @@ namespace UnityEngine.Rendering.Universal
         internal Shader geometryShadowShader => m_GeometryShadowShader;
         internal Shader geometryUnshadowShader => m_GeometryUnshadowShader;
         internal Shader projectedShadowShader => m_ProjectedShadowShader;
+        internal Shader projectedIsometricShadowShader => m_ProjectedIsometricShadowShader;
+        internal Shader projectedIsometricGlobalShadowShader => m_ProjectedIsometricGlobalShadowShader;
         internal TransparencySortMode transparencySortMode => m_TransparencySortMode;
         internal Vector3 transparencySortAxis => m_TransparencySortAxis;
         internal uint lightRenderTextureMemoryBudget => m_MaxLightRenderTextureCount;
@@ -161,6 +169,9 @@ namespace UnityEngine.Rendering.Universal
             CoreUtils.Destroy(geometryUnshadowMaterial);
             CoreUtils.Destroy(projectedShadowMaterial);
             CoreUtils.Destroy(projectedUnshadowMaterial);
+            CoreUtils.Destroy(projectedIsometricShadowMaterial);
+            CoreUtils.Destroy(projectedIsometricGlobalShadowMaterial);
+
         }
 
         /// <summary>
@@ -183,6 +194,10 @@ namespace UnityEngine.Rendering.Universal
             spriteUnshadowMaterial = null;
             projectedShadowMaterial = null;
             projectedUnshadowMaterial = null;
+
+            projectedIsometricShadowMaterial = null;
+            projectedIsometricGlobalShadowMaterial = null;
+
         }
 
         // transient data
@@ -193,6 +208,9 @@ namespace UnityEngine.Rendering.Universal
         internal Material geometryUnshadowMaterial { get; set; }
         internal Material projectedShadowMaterial { get; set; }
         internal Material projectedUnshadowMaterial { get; set; }
+
+        internal Material projectedIsometricShadowMaterial { get; set; }
+        internal Material projectedIsometricGlobalShadowMaterial { get; set; }
 
         internal RTHandle normalsRenderTarget;
         internal RTHandle cameraSortingLayerRenderTarget;

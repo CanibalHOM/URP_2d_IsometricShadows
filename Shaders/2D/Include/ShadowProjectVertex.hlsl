@@ -28,7 +28,7 @@ uniform float  _ShadowRadius;
 uniform float  _ShadowContractionDistance;
 uniform float  _SoftShadowAngle;
 uniform float3  _ShadowOffset;
-
+uniform float  _GlobalLightAngle;
 
 float AngleFromDir(float3 dir)
 {
@@ -117,17 +117,36 @@ float4 ProjectShadowVertexIsometricToWS(float2 vertex, float shadowType, float3 
 
     float lightAngle = AngleFromDirInv(normalize(lightPosOS));
 
-    float lightVectorLength = min(length(lightPosOS), 1.0f);
+    float lightVectorLength = clamp(length(lightPosOS), 0.45f, 1.0f);
     float3x3 matrixRotate = float3x3(cos(lightAngle), -sin(lightAngle), 0, sin(lightAngle), cos(lightAngle), 0, 0, 0, 1);
 
     // If we are suppose to extrude this point, then
-    float3 bufferVertexOS = isShadowVertex  * vertexOS * lightVectorLength + shadowOffset;
+    float3 bufferVertexOS = isShadowVertex  * vertexOS  + shadowOffset;
+
+    bufferVertexOS.y = bufferVertexOS.y * lightVectorLength;
     float3 rotateVertexOS = float3(mul(matrixRotate, bufferVertexOS));
-    float3 finalVertexOS = float3(mul(isometricRotateMatrix, float4(rotateVertexOS, 1)).xy, 0) - shadowOffset;
+    float3 finalVertexOS = float3(mul(isometricRotateMatrix, float4(rotateVertexOS, 1)).xy, 0);
+
+    return mul(shadowModelMatrix, float4(finalVertexOS - shadowOffset, 1));
+}
+
+float4 ProjectShadowVertexIsometricGlobalToWS(float2 vertex, float shadowType, float lightAngle, float3 shadowModelScale, float3 shadowOffset, float4x4 shadowModelMatrix, float4x4 shadowModelInvMatrix, float4x4 isometricRotateMatrix)
+{
+    float3 vertexOS = float3(vertex.x * shadowModelScale.x, vertex.y * shadowModelScale.y, 0);  // the tangent has the adjacent point stored in zw
+
+    float isShadowVertex = ToFloat(shadowType == 0);;
+
+    float lightAngleRad = Deg2Rad(lightAngle);
+    float3x3 matrixRotate = float3x3(cos(lightAngleRad), -sin(lightAngleRad), 0, sin(lightAngleRad), cos(lightAngleRad), 0, 0, 0, 1);
+
+    // If we are suppose to extrude this point, then
+    float3 bufferVertexOS = isShadowVertex * vertexOS + shadowOffset;
+    float3 rotateVertexOS = float3(mul(matrixRotate, bufferVertexOS));
+
+    float3 finalVertexOS = float3(mul(isometricRotateMatrix, float4(rotateVertexOS, 0)).xy, 0) - shadowOffset;
 
     return mul(shadowModelMatrix, float4(finalVertexOS, 1));
 }
-
 
 Varyings ProjectShadow(Attributes v)
 {
@@ -139,14 +158,47 @@ Varyings ProjectShadow(Attributes v)
     float  softShadowAngle = _SoftShadowAngle;
     float2  contractDir = 0;
 
-#if USE_ISOMETRIC_SHADOWS
-    float4 positionWS = ProjectShadowVertexIsometricToWS(otherEndPt, shadowType, _LightPos, _ShadowModelScale, _ShadowOffset, _ShadowModelMatrix, _ShadowModelInvMatrix, _IsometricRotateMatrix);
-#else
     float4 positionWS = ProjectShadowVertexToWS(position, otherEndPt, contractDir, shadowType, _LightPos, _ShadowModelScale, _ShadowModelMatrix, _ShadowModelInvMatrix, _ShadowContractionDistance, _ShadowRadius, softShadowAngle);
-#endif
 
     o.vertex = mul(GetWorldToHClipMatrix(), positionWS);
     o.shadow = CalculateShadowValue(shadowType);
+
+    return o;
+}
+
+Varyings ProjectIsometricGlobalShadow(Attributes v)
+{
+    Varyings o;
+
+    float2 otherEndPt = v.packed0.zw;
+    float  shadowType = v.packed0.x;
+    float2 position = v.vertex.xy;
+    float  softShadowAngle = _SoftShadowAngle;
+    float2 contractDir = 0;
+
+    float4 positionWS = ProjectShadowVertexIsometricGlobalToWS(otherEndPt, shadowType, _GlobalLightAngle, _ShadowModelScale, _ShadowOffset, _ShadowModelMatrix, _ShadowModelInvMatrix, _IsometricRotateMatrix);
+
+    o.vertex = mul(GetWorldToHClipMatrix(), positionWS);
+    o.shadow = CalculateShadowValue(shadowType);
+
+    return o;
+}
+
+Varyings ProjectIsometricShadow(Attributes v)
+{
+    Varyings o;
+
+    float2 otherEndPt = v.packed0.zw;
+    float  shadowType = v.packed0.x;
+    float2 position = v.vertex.xy;
+    float  softShadowAngle = _SoftShadowAngle;
+    float2 contractDir = 0;
+
+    float4 positionWS = ProjectShadowVertexIsometricToWS(otherEndPt, shadowType, _LightPos, _ShadowModelScale, _ShadowOffset, _ShadowModelMatrix, _ShadowModelInvMatrix, _IsometricRotateMatrix);
+
+    o.vertex = mul(GetWorldToHClipMatrix(), positionWS);
+    o.shadow = CalculateShadowValue(shadowType);
+
     return o;
 }
 

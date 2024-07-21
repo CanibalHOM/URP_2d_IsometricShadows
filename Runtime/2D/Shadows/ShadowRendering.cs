@@ -32,9 +32,8 @@ namespace UnityEngine.Rendering.Universal
         private static readonly int k_ShadowUnshadowColorID = Shader.PropertyToID("_UnshadowColor");
         private static readonly int k_IsometricRotateMatrix = Shader.PropertyToID("_IsometricRotateMatrix");
         private static readonly int k_ShadowOffset = Shader.PropertyToID("_ShadowOffset");
-
-        private static readonly string k_UseIsometricShadows = "USE_ISOMETRIC_SHADOWS";
-
+        private static readonly int k_GlobalLightAngleID = Shader.PropertyToID("_GlobalLightAngle");
+        
         private static readonly ProfilingSampler m_ProfilingSamplerShadows = new ProfilingSampler("Draw 2D Shadow Texture");
         private static readonly ProfilingSampler m_ProfilingSamplerShadowsA = new ProfilingSampler("Draw 2D Shadows (A)");
         private static readonly ProfilingSampler m_ProfilingSamplerShadowsR = new ProfilingSampler("Draw 2D Shadows (R)");
@@ -83,29 +82,12 @@ namespace UnityEngine.Rendering.Universal
             return material;
         }
 
-        private static Material CreateProjectedShadowMaterial(Shader shader, int offset, int pass, Light2D light)
-        {
-            Material material;  // pairs of color channels
-            material = CoreUtils.CreateEngineMaterial(shader);
-            material.SetInt(k_ShadowColorMaskID, 1 << (offset + 1));
-           
-            if (light.isIsometric)
-                material.EnableKeyword(k_UseIsometricShadows);
-            else
-                material.DisableKeyword(k_UseIsometricShadows);
-
-            material.SetPass(pass);
-
-            return material;
-        }
-
-
-        private static Material GetProjectedShadowMaterial(this Renderer2DData rendererData, Light2D light)
+        private static Material GetProjectedShadowMaterial(this Renderer2DData rendererData)
         {
             //rendererData.projectedShadowMaterial = null;
             if (rendererData.projectedShadowMaterial == null || rendererData.projectedShadowShader != rendererData.projectedShadowMaterial.shader)
             {
-                rendererData.projectedShadowMaterial = CreateProjectedShadowMaterial(rendererData.projectedShadowShader, 0, 0, light);
+                rendererData.projectedShadowMaterial = CreateMaterial(rendererData.projectedShadowShader, 0, 0);
             }
 
             return rendererData.projectedShadowMaterial;
@@ -120,6 +102,28 @@ namespace UnityEngine.Rendering.Universal
             }
 
             return rendererData.projectedUnshadowMaterial;
+        }
+
+        private static Material GetProjectedIsometricShadowMaterial(this Renderer2DData rendererData)
+        {
+            //rendererData.projectedShadowMaterial = null;
+            if (rendererData.projectedIsometricShadowMaterial == null || rendererData.projectedIsometricShadowShader != rendererData.projectedIsometricShadowMaterial.shader)
+            {
+                rendererData.projectedIsometricShadowMaterial = CreateMaterial(rendererData.projectedIsometricShadowShader, 0, 0);
+            }
+
+            return rendererData.projectedIsometricShadowMaterial;
+        }
+
+        private static Material GetProjectedIsometricGlobalShadowMaterial(this Renderer2DData rendererData)
+        {
+            //rendererData.projectedShadowMaterial = null;
+            if (rendererData.projectedIsometricGlobalShadowMaterial == null || rendererData.projectedIsometricGlobalShadowShader != rendererData.projectedIsometricGlobalShadowMaterial.shader)
+            {
+                rendererData.projectedIsometricGlobalShadowMaterial = CreateMaterial(rendererData.projectedIsometricGlobalShadowShader, 0, 0);
+            }
+
+            return rendererData.projectedIsometricGlobalShadowMaterial;
         }
 
         private static Material GetSpriteShadowMaterial(this Renderer2DData rendererData)
@@ -285,8 +289,12 @@ namespace UnityEngine.Rendering.Universal
 
             if (hadShadowsToRender)
             {
-                cmdBuffer.SetRenderTarget(m_RenderTargets[shadowIndex].nameID, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.DontCare);
-                cmdBuffer.ClearRenderTarget(RTClearFlags.All, Color.clear, 1, 0);
+                if (!light.isGlobalIsometric)
+                {
+                    cmdBuffer.SetRenderTarget(m_RenderTargets[shadowIndex].nameID, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.DontCare);
+                    cmdBuffer.ClearRenderTarget(RTClearFlags.All, Color.clear, 1, 0);
+                }
+
                 RenderShadows(CommandBufferHelpers.GetRasterCommandBuffer(cmdBuffer), pass.rendererData, ref layer, light);
             }
 
@@ -326,13 +334,10 @@ namespace UnityEngine.Rendering.Universal
             cmdBuffer.SetGlobalVector(k_ShadowOffset, shadowCaster.shadowOffset);
             cmdBuffer.SetGlobalMatrix(k_IsometricRotateMatrix, shadowCaster.m_CachedIsometricRotateMatrix);
             cmdBuffer.SetGlobalFloat(k_ShadowSoftnessFalloffIntensityID, light.shadowSoftnessFalloffIntensity);
-            
+            cmdBuffer.SetGlobalFloat(k_GlobalLightAngleID, light.lightAngle2D);
+
             var shadowRadius = 0f;
 
-            //if (light.isIsometric)
-            //    shadowRadius = shadowCaster.boundingSphere.radius + (light.transform.position - light.boundingSphere.position).magnitude;
-            //else
-            //    shadowRadius = light.boundingSphere.radius + (light.transform.position - light.boundingSphere.position).magnitude;
             shadowRadius = light.boundingSphere.radius + (light.transform.position - light.boundingSphere.position).magnitude;
             cmdBuffer.SetGlobalFloat(k_ShadowRadiusID, shadowRadius);
 
@@ -506,19 +511,29 @@ namespace UnityEngine.Rendering.Universal
                 cmdBuffer.SetGlobalVector(k_LightPosID, light.transform.position);
                 cmdBuffer.SetGlobalFloat(k_SoftShadowAngle, Mathf.Deg2Rad * light.shadowSoftness * k_MaxShadowSoftnessAngle);
 
-                var projectedShadowMaterial = rendererData.GetProjectedShadowMaterial(light);
+                var projectedShadowMaterial = rendererData.GetProjectedShadowMaterial();
                 var projectedUnshadowMaterial = rendererData.GetProjectedUnshadowMaterial();
                 var spriteShadowMaterial = rendererData.GetSpriteShadowMaterial();
                 var spriteUnshadowMaterial = rendererData.GetSpriteUnshadowMaterial();
                 var geometryShadowMaterial = rendererData.GetGeometryShadowMaterial();
                 var geometryUnshadowMaterial = rendererData.GetGeometryUnshadowMaterial();
+                var projectedIsometricShadowMaterial = rendererData.GetProjectedIsometricShadowMaterial();
+                var projectedIsometricGlobalShadowMaterial = rendererData.GetProjectedIsometricGlobalShadowMaterial();
 
                 for (var group = 0; group < layer.shadowCasters.Count; group++)
                 {
                     var shadowCasters = layer.shadowCasters[group].GetShadowCasters();
 
                     // Draw the projected shadows for the shadow caster group. Only writes the composite stencil bit
-                    RenderProjectedShadows(cmdBuffer, layer.startLayerID, light, shadowCasters, projectedShadowMaterial, 0);
+                    if (light.isGlobalIsometric) 
+                    {
+                        RenderProjectedShadows(cmdBuffer, layer.startLayerID, light, shadowCasters, projectedIsometricGlobalShadowMaterial, 0);
+                        continue;
+                    }
+                    else if (light.isIsometric)
+                        RenderProjectedShadows(cmdBuffer, layer.startLayerID, light, shadowCasters, projectedIsometricShadowMaterial, 0);
+                    else
+                        RenderProjectedShadows(cmdBuffer, layer.startLayerID, light, shadowCasters, projectedShadowMaterial, 0);
 
                     // Render self shadowing or non self shadowing
                     RenderSelfShadowOption(cmdBuffer, layer.startLayerID, light, shadowCasters, projectedUnshadowMaterial, spriteShadowMaterial, spriteUnshadowMaterial, geometryShadowMaterial, geometryUnshadowMaterial);

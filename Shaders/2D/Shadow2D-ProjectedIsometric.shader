@@ -1,4 +1,4 @@
-Shader "Hidden/ShadowProjected2D"
+Shader "Hidden/ShadowIsometricProjected2D"
 {
     Properties
     {
@@ -36,7 +36,7 @@ Shader "Hidden/ShadowProjected2D"
 
             Varyings vert (Attributes v)
             {
-                return ProjectShadow(v);
+                return ProjectIsometricShadow(v);
             }
 
             half4 frag(Varyings i) : SV_Target
@@ -84,7 +84,7 @@ Shader "Hidden/ShadowProjected2D"
 
             Varyings vert (Attributes v)
             {
-                return ProjectShadow(v);
+                return ProjectIsometricShadow(v);
             }
 
             half4 frag(Varyings i) : SV_Target

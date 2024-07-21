@@ -81,7 +81,7 @@ namespace UnityEngine.Rendering.Universal
             // This should be rewritten to search only global lights
             foreach (var light in lights)
             {
-                if (light.lightType == Light2D.LightType.Global &&
+                if (light.lightType == Light2D.LightType.Global || light.lightType == Light2D.LightType.IsometricGlobal && 
                     light.blendStyleIndex == blendStyleIndex &&
                     light.IsLitLayer(sortingLayerIndex))
                 {

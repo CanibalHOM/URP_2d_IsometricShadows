@@ -101,13 +101,13 @@ FragmentOutput ToFragmentOutput(half4 finalColor)
     #if USE_SHAPE_LIGHT_TYPE_3
     output.GLightBuffer3 = finalColor;
     #endif
-    #if USE_SHAPE_LIGHT_TYPE_4
-    output.GLightBuffer2 = finalColor;
-    #endif
     #if USE_SHAPE_LIGHT_TYPE_5
     output.GLightBuffer3 = finalColor;
     #endif
-    #if !defined(USE_SHAPE_LIGHT_TYPE_0) && !defined(USE_SHAPE_LIGHT_TYPE_1) && !defined(USE_SHAPE_LIGHT_TYPE_2) && !defined(USE_SHAPE_LIGHT_TYPE_3)  && !defined(USE_SHAPE_LIGHT_TYPE_4)  && !defined(USE_SHAPE_LIGHT_TYPE_5)
+    #if USE_SHAPE_LIGHT_TYPE_6
+    output.GLightBuffer2 = finalColor;
+    #endif
+    #if !defined(USE_SHAPE_LIGHT_TYPE_0) && !defined(USE_SHAPE_LIGHT_TYPE_1) && !defined(USE_SHAPE_LIGHT_TYPE_2) && !defined(USE_SHAPE_LIGHT_TYPE_3)  && !defined(USE_SHAPE_LIGHT_TYPE_5) && !defined(USE_SHAPE_LIGHT_TYPE_6)
     output.GLightBuffer0 = finalColor;
     #endif
     return output;
