@@ -27,6 +27,7 @@ namespace UnityEngine.Rendering.Universal
         private static readonly int k_ShadowContractionDistanceID = Shader.PropertyToID("_ShadowContractionDistance");
         private static readonly int k_ShadowAlphaCutoffID = Shader.PropertyToID("_ShadowAlphaCutoff");
         private static readonly int k_SoftShadowAngle = Shader.PropertyToID("_SoftShadowAngle");
+        private static readonly int k_GlobalShadowIntensity = Shader.PropertyToID("_GlobalShadowIntensity");
         private static readonly int k_ShadowSoftnessFalloffIntensityID = Shader.PropertyToID("_ShadowSoftnessFalloffIntensity");
         private static readonly int k_ShadowShadowColorID = Shader.PropertyToID("_ShadowColor");
         private static readonly int k_ShadowUnshadowColorID = Shader.PropertyToID("_UnshadowColor");
@@ -527,6 +528,8 @@ namespace UnityEngine.Rendering.Universal
                     // Draw the projected shadows for the shadow caster group. Only writes the composite stencil bit
                     if (light.isGlobalIsometric) 
                     {
+                        
+                        cmdBuffer.SetGlobalFloat(k_GlobalShadowIntensity, light.intensity);
                         RenderProjectedShadows(cmdBuffer, layer.startLayerID, light, shadowCasters, projectedIsometricGlobalShadowMaterial, 0);
                         continue;
                     }

@@ -33,6 +33,7 @@ Shader "Hidden/ShadowIsometricGlobalProjected2D"
             TEXTURE2D(_FalloffLookup);
             SAMPLER(sampler_FalloffLookup);
             half _ShadowSoftnessFalloffIntensity;
+            half _GlobalShadowIntensity;
 
             Varyings vert (Attributes v)
             {
@@ -41,7 +42,7 @@ Shader "Hidden/ShadowIsometricGlobalProjected2D"
 
             half4 frag(Varyings i) : SV_Target
             {
-                float value = 0.5f * _ShadowSoftnessFalloffIntensity;
+                float value = (2.0f - _GlobalShadowIntensity) * _ShadowSoftnessFalloffIntensity;
                 half4 color = half4(value, value, value, value);
                 return color;
             }

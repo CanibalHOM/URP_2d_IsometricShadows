@@ -134,7 +134,7 @@ float4 ProjectShadowVertexIsometricGlobalToWS(float2 vertex, float shadowType, f
 {
     float3 vertexOS = float3(vertex.x * shadowModelScale.x, vertex.y * shadowModelScale.y, 0);  // the tangent has the adjacent point stored in zw
 
-    float isShadowVertex = ToFloat(shadowType == 0);;
+    float isShadowVertex = ToFloat(shadowType == 0);
 
     float lightAngleRad = Deg2Rad(lightAngle);
     float3x3 matrixRotate = float3x3(cos(lightAngleRad), -sin(lightAngleRad), 0, sin(lightAngleRad), cos(lightAngleRad), 0, 0, 0, 1);
@@ -142,7 +142,6 @@ float4 ProjectShadowVertexIsometricGlobalToWS(float2 vertex, float shadowType, f
     // If we are suppose to extrude this point, then
     float3 bufferVertexOS = isShadowVertex * vertexOS + shadowOffset;
     float3 rotateVertexOS = float3(mul(matrixRotate, bufferVertexOS));
-
     float3 finalVertexOS = float3(mul(isometricRotateMatrix, float4(rotateVertexOS, 0)).xy, 0) - shadowOffset;
 
     return mul(shadowModelMatrix, float4(finalVertexOS, 1));
