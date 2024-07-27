@@ -118,7 +118,7 @@ float4 ProjectShadowVertexIsometricToWS(float2 vertex, float shadowType, float3 
     float lightAngle = AngleFromDirInv(normalize(lightPosOS));
 
     float lightVectorLength = clamp(length(lightPosOS), 0.45f, 1.0f);
-    float3x3 matrixRotate = float3x3(cos(lightAngle), -sin(lightAngle), 0, sin(lightAngle), cos(lightAngle), 0, 0, 0, 1);
+    float3x3 matrixRotate = float3x3(1, -sin(lightAngle), 0, 0, cos(lightAngle), 0, 0, 0, 1);
 
     // If we are suppose to extrude this point, then
     float3 bufferVertexOS = isShadowVertex  * vertexOS  + shadowOffset;
@@ -137,10 +137,10 @@ float4 ProjectShadowVertexIsometricGlobalToWS(float2 vertex, float shadowType, f
     float isShadowVertex = ToFloat(shadowType == 0);
 
     float lightAngleRad = Deg2Rad(lightAngle);
-    float3x3 matrixRotate = float3x3(cos(lightAngleRad), -sin(lightAngleRad), 0, sin(lightAngleRad), cos(lightAngleRad), 0, 0, 0, 1);
-
+    float3x3 matrixRotate = float3x3(1, -sin(lightAngleRad), 0, 0, cos(lightAngleRad), 0, 0, 0, 1);
     // If we are suppose to extrude this point, then
     float3 bufferVertexOS = isShadowVertex * vertexOS + shadowOffset;
+
     float3 rotateVertexOS = float3(mul(matrixRotate, bufferVertexOS));
     float3 finalVertexOS = float3(mul(isometricRotateMatrix, float4(rotateVertexOS, 0)).xy, 0) - shadowOffset;
 
